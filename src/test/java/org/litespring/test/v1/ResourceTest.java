@@ -6,10 +6,7 @@ import org.junit.Test;
 import org.litespring.core.io.ClassPathResource;
 import org.litespring.core.io.FileSystemResource;
 import org.litespring.core.io.Resource;
-
 public class ResourceTest {
-
-
     @Test
     public void testClassPathResource() throws Exception {
         Resource resource = new ClassPathResource("petstore-v1.xml");

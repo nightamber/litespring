@@ -9,6 +9,7 @@ import org.litespring.beans.factory.BeanDefinitionStoreException;
 
 import org.litespring.beans.factory.support.DefaultBeanFactory;
 import org.litespring.beans.factory.xml.XmlBeanDefinitionReader;
+import org.litespring.core.io.ClassPathResource;
 import org.litespring.service.v1.PetStoreService;
 
 import static org.junit.Assert.*;
@@ -32,22 +33,21 @@ public class BeanFactoryTest {
 
     @Test
     public void testGetBean(){
-        //通过XmlBeanDefinitionReader 来加载 xml 分离DefalutBeanFactory中的 定义bean的方法，实现单一原则
-        reader.loadBeanDefinitions("petstore-v1.xml");
-
-        //定义bean 接口
+       reader.loadBeanDefinitions(new ClassPathResource("petstore-v1.xml"));
         BeanDefinition bd = factory.getBeanDefinition("petStore");
-        //判断与 xml中的是否相等
-        assertEquals("org.litespring.service.v1.PetStoreService",bd.getBeanClassName());
-        //获得bean
-        PetStoreService petStore = (PetStoreService) factory.getBean("petStore");
-        //测试 是否获得bean
+        Assert.assertTrue(bd.isSingleton());
+        Assert.assertFalse(bd.isPrototype());
+        Assert.assertEquals(BeanDefinition.SCOPE_DEFAULT,bd.getScope());
+        Assert.assertEquals("org.litespring.service.v1.PetStoreService",bd.getBeanClassName());
+        PetStoreService petStore = (PetStoreService)factory.getBean("petStore");
         assertNotNull(petStore);
+
+
     }
 
     @Test
     public void testInvalidBean(){
-        reader.loadBeanDefinitions("petstore-v1.xml");
+        reader.loadBeanDefinitions(new ClassPathResource("petstore-v1.xml"));
         try {
             factory.getBean("invalidBean");
         }catch (BeanCreationException e){
@@ -59,7 +59,7 @@ public class BeanFactoryTest {
     @Test
     public void testInvalidXML(){
         try {
-            reader.loadBeanDefinitions("xxx.xml");
+            reader.loadBeanDefinitions(new ClassPathResource("xxx.xml"));
         }catch (BeanDefinitionStoreException e){
             return;
         }

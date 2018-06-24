@@ -26,7 +26,5 @@ public class BeanCreationException extends BeansException {
         return beanName;
     }
 
-    public void setBeanName(String beanName) {
-        this.beanName = beanName;
-    }
+
 }
