@@ -7,10 +7,12 @@ import java.beans.BeanInfo;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.commons.beanutils.BeanUtils;
 import org.litespring.beans.BeanDefinition;
 import org.litespring.beans.PropertyValue;
 import org.litespring.beans.SimpleTypeConverter;
@@ -95,15 +97,48 @@ public class DefaultBeanFactory extends DefaultSingletonBeanRegistry
 
 
     private Object instantiateBean(BeanDefinition bd) {
-        ClassLoader cl = this.getBeanClassLoader();
-        String beanClassName = bd.getBeanClassName();
+        if(bd.hasConstructorArgumentValues()){
+            ConstructorResolver resolver = new ConstructorResolver(this);
+            return resolver.autowireConstructor(bd);
+        }else {
+            ClassLoader cl = this.getBeanClassLoader();
+            String beanClassName = bd.getBeanClassName();
+            try {
+                //通过反射获得对象 -- 加载的类 需要有无參构造方法
+                Class<?> clz = cl.loadClass(beanClassName);
+                return clz.newInstance();
+            }catch (Exception e){
+                //异常处理
+                throw  new BeanCreationException("create bean for" + beanClassName + "failed",e);
+            }
+        }
+
+
+
+    }
+
+    /**
+     * 使用apache 提供的工具类 实现反射 真的是非常简单了
+     * @param bd
+     * @param bean
+     */
+    private void populateBeanUseCommonBeanUtils(BeanDefinition bd,Object bean){
+        List<PropertyValue> pvs = bd.getPropertyValues();
+        if(pvs == null || pvs.isEmpty()){
+            return;
+        }
+
+        BeanDefinitionValueResolver valueResolver = new BeanDefinitionValueResolver(
+            this);
         try {
-            //通过反射获得对象 -- 加载的类 需要有无參构造方法
-            Class<?> clz = cl.loadClass(beanClassName);
-            return clz.newInstance();
-        }catch (Exception e){
-            //异常处理
-            throw  new BeanCreationException("create bean for" + beanClassName + "failed",e);
+            for (PropertyValue pv : pvs) {
+                String propertyName = pv.getName();
+                Object originalValue = pv.getValue();
+                Object resolvedValue = valueResolver.resolveValueIfNecessary(originalValue);
+                BeanUtils.setProperty(bean,propertyName,resolvedValue);
+            }
+        } catch (Exception e) {
+            throw new BeanCreationException("Populater bean property failed for [" + bd.getBeanClassName()+"]");
         }
     }
 
@@ -114,4 +149,6 @@ public class DefaultBeanFactory extends DefaultSingletonBeanRegistry
     public ClassLoader getBeanClassLoader() {
         return (this.beanClassLoader != null ? this.beanClassLoader : ClassUtils.getDefaultClassLoader());
     }
+
+
 }
