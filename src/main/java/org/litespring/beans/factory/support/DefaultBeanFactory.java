@@ -1,10 +1,19 @@
 package org.litespring.beans.factory.support;
 
 
+
+import java.beans.BeanInfo;
+
+import java.beans.Introspector;
+import java.beans.PropertyDescriptor;
+
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.litespring.beans.BeanDefinition;
+import org.litespring.beans.PropertyValue;
+import org.litespring.beans.SimpleTypeConverter;
 import org.litespring.beans.factory.BeanCreationException;
 
 
@@ -45,7 +54,47 @@ public class DefaultBeanFactory extends DefaultSingletonBeanRegistry
 
     }
 
-    private Object createBean(BeanDefinition bd) {
+    private Object createBean(BeanDefinition bd){
+        //创建实例
+        Object bean = instantiateBean(bd);
+        //设置属性
+        populateBean(bd,bean);
+        return bean;
+    }
+
+    private void populateBean(BeanDefinition bd, Object bean) {
+        List<PropertyValue> pvs = bd.getPropertyValues();
+        if(pvs == null || pvs.isEmpty()){
+            return;
+        }
+        SimpleTypeConverter converter = new SimpleTypeConverter();
+        BeanDefinitionValueResolver valueResolver = new BeanDefinitionValueResolver(
+            this);
+        try {
+            for (PropertyValue pv : pvs) {
+                String propertyName = pv.getName();
+                Object originalValue = pv.getValue();
+                Object resolveValue = valueResolver.resolveValueIfNecessary(originalValue);
+                //假设现在originalValue 表示的是 ref = accountDao 已经通过resolve得到了accountDao对象
+                //调用Petstore 的 setAccount方法
+                BeanInfo beanInfo = Introspector.getBeanInfo(bean.getClass());
+                PropertyDescriptor[] pds = beanInfo.getPropertyDescriptors();
+                for (PropertyDescriptor pd : pds) {
+                    if(pd.getName().equals(propertyName)){
+                        Object convertedValue = converter.convertIfNecessary(resolveValue, pd.getPropertyType());
+                        pd.getWriteMethod().invoke(bean,convertedValue);
+                        break;
+                    }
+                }
+
+            }
+        } catch (Exception ex) {
+            throw new BeanCreationException("Failed to obtain BeanInfo for class [ "+bd.getBeanClassName()+" ]");
+        }
+    }
+
+
+    private Object instantiateBean(BeanDefinition bd) {
         ClassLoader cl = this.getBeanClassLoader();
         String beanClassName = bd.getBeanClassName();
         try {
