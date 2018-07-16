@@ -19,10 +19,16 @@ public class GenericBeanDefinition implements BeanDefinition {
         this.id = id;
         this.beanClassName = beanClassName;
     }
+
+    public GenericBeanDefinition() {
+
+    }
+
     public String getBeanClassName() {
 
         return this.beanClassName;
     }
+
 
     public List<PropertyValue> getPropertyValues() {
         return this.propertyValues;
@@ -49,10 +55,20 @@ public class GenericBeanDefinition implements BeanDefinition {
     public String getScope() {
         return this.scope;
     }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
     public void setScope(String scope) {
         this.scope = scope;
+
         this.singleton = SCOPE_SINGLETON.equals(scope) || SCOPE_DEFAULT.equals(scope);
         this.prototype = SCOPE_PROTOTYPE.equals(scope);
 
+    }
+
+    public void setBeanClassName(String beanClassName) {
+        this.beanClassName = beanClassName;
     }
 }
