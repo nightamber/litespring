@@ -10,7 +10,7 @@ import org.litespring.core.type.classreading.ClassMetadataReadingVisitor;
 import org.springframework.asm.ClassReader;
 
 public class ClassReaderTest {
-    /*@Test
+    @Test
     public void testGetClasMetaData() throws IOException {
         ClassPathResource resource = new ClassPathResource("org/litespring/service/v4/PetStoreService.class");
         ClassReader reader = new ClassReader(resource.getInputStream());
@@ -25,7 +25,7 @@ public class ClassReaderTest {
         Assert.assertEquals("org.litespring.service.v4.PetStoreService", visitor.getClassName());
         Assert.assertEquals("java.lang.Object", visitor.getSuperClassName());
         Assert.assertEquals(0, visitor.getInterfaceNames().length);
-    }*/
+    }
 
     @Test
     public void testGetAnnonation() throws Exception{
